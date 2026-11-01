@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#D1D5DB"
+    android:orientation="vertical"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingLeft="3dp"
+    android:paddingRight="3dp">
+
+    <!-- Baris 1: Q W E R T Y U I O P -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="6dp">
+
+        <Button android:id="@+id/btn_q" android:text="q" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_w" android:text="w" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_e" android:text="e" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_r" android:text="r" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_t" android:text="t" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_y" android:text="y" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_u" android:text="u" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_i" android:text="i" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_o" android:text="o" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_p" android:text="p" style="@style/NauKeyStyle" />
+    </LinearLayout>
+
+    <!-- Baris 2: A S D F G H J K L -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:layout_marginBottom="6dp">
+
+        <Button android:id="@+id/btn_a" android:text="a" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_s" android:text="s" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_d" android:text="d" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_f" android:text="f" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_g" android:text="g" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_h" android:text="h" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_j" android:text="j" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_k" android:text="k" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_l" android:text="l" style="@style/NauKeyStyle" />
+    </LinearLayout>
+
+    <!-- Baris 3: Shift, Z X C V B N M, Delete -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="6dp">
+
+        <Button android:id="@+id/btn_shift" android:text="⇧" style="@style/NauSpecialKeyStyle" android:layout_weight="1.5" />
+        <Button android:id="@+id/btn_z" android:text="z" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_x" android:text="x" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_c" android:text="c" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_v" android:text="v" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_b" android:text="b" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_n" android:text="n" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_m" android:text="m" style="@style/NauKeyStyle" />
+        <Button android:id="@+id/btn_delete" android:text="⌫" style="@style/NauSpecialKeyStyle" android:layout_weight="1.5" />
+    </LinearLayout>
+
+    <!-- Baris 4: Space & Enter -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal">
+
+        <Button android:id="@+id/btn_space" android:text="space" style="@style/NauKeyStyle" android:layout_weight="6" />
+        <Button android:id="@+id/btn_enter" android:text="return" style="@style/NauSpecialKeyStyle" android:layout_weight="2.5" />
+    </LinearLayout>
+
+</LinearLayout>
