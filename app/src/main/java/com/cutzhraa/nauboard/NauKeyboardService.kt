@@ -44,8 +44,8 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
     // Simbol Utama (Halaman 1)
     private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
-        "-","/",":",";","(",")","$","&","@",'"',
-        ".",",","?","!","'", " "
+        "-","/",":",";","(",")","$","&","@",
+        "\"", ".", ",", "?", "!", "'", " "
     )
 
     // Simbol Sekunder #+= (Halaman 2)
