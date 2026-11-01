@@ -9,10 +9,11 @@ android {
 
     defaultConfig {
         applicationId "com.cutzhraa.nauboard"
-        minSdk 24
+        minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 4 // Naikkan angka ini setiap ada rilis baru (1, 2, 3, 4, dst.)
+        versionName "1.0.4"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {

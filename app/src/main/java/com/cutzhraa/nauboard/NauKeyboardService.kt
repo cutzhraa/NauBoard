@@ -1,18 +1,23 @@
 package com.cutzhraa.nauboard
 
 import android.inputmethodservice.InputMethodService
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
 
 class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
-    private var isCaps = true
+    private var isCaps = false
     private var isSymbolMode = false
 
+    private var rootView: View? = null
+    private var shiftBtn: Button? = null
     private val letterButtons = mutableListOf<Button>()
     
-    // Explicitly typed as Array<String>
     private val letters: Array<String> = arrayOf(
         "q","w","e","r","t","y","u","i","o","p",
         "a","s","d","f","g","h","j","k","l",
@@ -25,11 +30,23 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         "\"", "'", ":", ";", "!", "?"
     )
 
+    // Handler untuk Hold Backspace (Delete Beruntun)
+    private val deleteHandler = Handler(Looper.getMainLooper())
+    private var isDeleting = false
+    private val deleteRunnable = object : Runnable {
+        override fun run() {
+            if (isDeleting) {
+                doDelete()
+                deleteHandler.postDelayed(this, 50)
+            }
+        }
+    }
+
     override fun onCreateInputView(): View {
-        val view = layoutInflater.inflate(R.layout.main_keyboard, null)
-        setupKeyListeners(view)
+        rootView = layoutInflater.inflate(R.layout.main_keyboard, null)
+        rootView?.let { setupKeyListeners(it) }
         updateKeyLabels()
-        return view
+        return rootView!!
     }
 
     private fun setupKeyListeners(view: View) {
@@ -49,11 +66,48 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
             }
         }
 
-        view.findViewById<Button>(R.id.btn_shift)?.setOnClickListener(this)
+        shiftBtn = view.findViewById(R.id.btn_shift)
+        shiftBtn?.setOnClickListener(this)
+        
         view.findViewById<Button>(R.id.btn_mode)?.setOnClickListener(this)
         view.findViewById<Button>(R.id.btn_space)?.setOnClickListener(this)
-        view.findViewById<Button>(R.id.btn_delete)?.setOnClickListener(this)
         view.findViewById<Button>(R.id.btn_enter)?.setOnClickListener(this)
+
+        // Suggestion Click Listeners
+        view.findViewById<TextView>(R.id.suggest_1)?.setOnClickListener { insertSuggestedWord("aku ") }
+        view.findViewById<TextView>(R.id.suggest_2)?.setOnClickListener { insertSuggestedWord("saya ") }
+        view.findViewById<TextView>(R.id.suggest_3)?.setOnClickListener { insertSuggestedWord("itu ") }
+
+        // Setup Touch Listener untuk Hold Backspace
+        val deleteBtn = view.findViewById<Button>(R.id.btn_delete)
+        deleteBtn?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isDeleting = true
+                    doDelete()
+                    deleteHandler.postDelayed(deleteRunnable, 400)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    isDeleting = false
+                    deleteHandler.removeCallbacks(deleteRunnable)
+                }
+            }
+            true
+        }
+    }
+
+    private fun doDelete() {
+        val inputConnection = currentInputConnection ?: return
+        val selectedText = inputConnection.getSelectedText(0)
+        if (selectedText.isNullOrEmpty()) {
+            inputConnection.deleteSurroundingText(1, 0)
+        } else {
+            inputConnection.commitText("", 1)
+        }
+    }
+
+    private fun insertSuggestedWord(word: String) {
+        currentInputConnection?.commitText(word, 1)
     }
 
     override fun onClick(v: View?) {
@@ -68,17 +122,12 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
             }
             R.id.btn_mode -> {
                 isSymbolMode = !isSymbolMode
+                if (isSymbolMode) {
+                    isCaps = false
+                }
                 val modeBtn = v as? Button
                 modeBtn?.text = if (isSymbolMode) "ABC" else "123"
                 updateKeyLabels()
-            }
-            R.id.btn_delete -> {
-                val selectedText = inputConnection.getSelectedText(0)
-                if (selectedText.isNullOrEmpty()) {
-                    inputConnection.deleteSurroundingText(1, 0)
-                } else {
-                    inputConnection.commitText("", 1)
-                }
             }
             R.id.btn_space -> {
                 inputConnection.commitText(" ", 1)
@@ -93,7 +142,6 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
                 if (!text.isNullOrEmpty()) {
                     inputConnection.commitText(text, 1)
                     
-                    // Auto-reset Shift setelah mengetik 1 huruf kapital
                     if (isCaps && !isSymbolMode) {
                         isCaps = false
                         updateKeyLabels()
@@ -104,6 +152,12 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
     }
 
     private fun updateKeyLabels() {
+        if (isSymbolMode) {
+            shiftBtn?.text = "#+="
+        } else {
+            shiftBtn?.text = "⇧"
+        }
+
         for (i in letterButtons.indices) {
             val btn = letterButtons[i]
             if (isSymbolMode) {
