@@ -19,13 +19,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle Wrapper
-        run: chmod +x gradlew || true
+      - name: Grant Executable Permission for Gradle
+        run: chmod +x ./gradle-8.5/bin/gradle
 
       - name: Build Debug APK
         run: ./gradle-8.5/bin/gradle assembleDebug
 
-      # Mengubah nama app-debug.apk menjadi NauBoard-[TAG].apk (contoh: NauBoard-v1.0.0.apk)
       - name: Rename APK
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
