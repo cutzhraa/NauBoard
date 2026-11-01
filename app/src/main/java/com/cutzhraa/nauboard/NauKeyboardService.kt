@@ -63,7 +63,7 @@ class NauKeyboardService : InputMethodService() {
         "z","x","c","v","b","n","m"
     )
     
-    // Simbol Halaman 1 (123)
+    // Simbol Halaman 1 (123 - Lengkap dengan @ dan ")
     private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
         "-","/",":",";","(",")","$","&","@",
