@@ -3,15 +3,27 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@android:drawable/sym_def_app_icon"
         android:label="NauBoard"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault">
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
+        <!-- Activity Utama agar Icon Muncul di Launcher -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Service Keyboard NauBoard -->
         <service
             android:name=".NauKeyboardService"
+            android:exported="true"
             android:label="NauBoard"
-            android:permission="android.permission.BIND_INPUT_METHOD"
-            android:exported="true">
+            android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
             </intent-filter>
