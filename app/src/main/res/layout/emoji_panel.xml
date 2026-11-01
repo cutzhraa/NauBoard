@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="220dp"
+    android:background="#D1D5DB"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Header Panel Emoji -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Sering Digunakan"
+            android:textColor="#4B5563"
+            android:textSize="13sp"
+            android:textStyle="bold"/>
+        <Button
+            android:id="@+id/btn_close_emoji"
+            style="@style/NauSpecialKeyStyle"
+            android:layout_width="50dp"
+            android:layout_height="30dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="ABC"
+            android:textSize="12sp"/>
+    </RelativeLayout>
+
+    <!-- Grid Emoji iOS Popular -->
+    <GridLayout
+        android:id="@+id/grid_emojis"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:columnCount="7"
+        android:rowCount="4"
+        android:alignmentMode="alignMargins">
+        <!-- Emoji items injected dynamically via Kotlin -->
+    </GridLayout>
+</LinearLayout>

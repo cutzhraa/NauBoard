@@ -1,147 +1,161 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#D1D5DB"
-    android:orientation="vertical"
-    android:paddingTop="2dp"
-    android:paddingBottom="4dp">
+    android:layout_height="wrap_content">
 
-    <!-- 1. Word Suggestion Bar -->
+    <!-- Papan Main Keyboard -->
     <LinearLayout
-        android:id="@+id/suggestion_bar"
+        android:id="@+id/layout_main_keyboard"
         android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
-        <TextView
-            android:id="@+id/suggest_1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:textColor="#1F2937"
-            android:textSize="15sp"
-            android:text="yang"/>
-        <View
-            android:layout_width="1dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
-            android:background="#9CA3AF"/>
-        <TextView
-            android:id="@+id/suggest_2"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:textColor="#1F2937"
-            android:textSize="15sp"
-            android:text="aku"/>
-        <View
-            android:layout_width="1dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
-            android:background="#9CA3AF"/>
-        <TextView
-            android:id="@+id/suggest_3"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:textColor="#1F2937"
-            android:textSize="15sp"
-            android:text="ini"/>
+        android:layout_height="wrap_content"
+        android:background="#D1D5DB"
+        android:orientation="vertical"
+        android:paddingTop="2dp"
+        android:paddingBottom="4dp">
+
+        <!-- 1. Word Suggestion Bar -->
+        <LinearLayout
+            android:id="@+id/suggestion_bar"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+            <TextView
+                android:id="@+id/suggest_1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="#1F2937"
+                android:textSize="15sp"
+                android:text="yang"/>
+            <View
+                android:layout_width="1dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:background="#9CA3AF"/>
+            <TextView
+                android:id="@+id/suggest_2"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="#1F2937"
+                android:textSize="15sp"
+                android:text="aku"/>
+            <View
+                android:layout_width="1dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:background="#9CA3AF"/>
+            <TextView
+                android:id="@+id/suggest_3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="#1F2937"
+                android:textSize="15sp"
+                android:text="ini"/>
+        </LinearLayout>
+
+        <!-- 2. Baris QWERTY -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btn_q" style="@style/NauKeyStyle" android:text="q"/>
+            <Button android:id="@+id/btn_w" style="@style/NauKeyStyle" android:text="w"/>
+            <Button android:id="@+id/btn_e" style="@style/NauKeyStyle" android:text="e"/>
+            <Button android:id="@+id/btn_r" style="@style/NauKeyStyle" android:text="r"/>
+            <Button android:id="@+id/btn_t" style="@style/NauKeyStyle" android:text="t"/>
+            <Button android:id="@+id/btn_y" style="@style/NauKeyStyle" android:text="y"/>
+            <Button android:id="@+id/btn_u" style="@style/NauKeyStyle" android:text="u"/>
+            <Button android:id="@+id/btn_i" style="@style/NauKeyStyle" android:text="i"/>
+            <Button android:id="@+id/btn_o" style="@style/NauKeyStyle" android:text="o"/>
+            <Button android:id="@+id/btn_p" style="@style/NauKeyStyle" android:text="p"/>
+        </LinearLayout>
+
+        <!-- 3. Baris ASDFGHJKL -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5"/>
+            <Button android:id="@+id/btn_a" style="@style/NauKeyStyle" android:text="a"/>
+            <Button android:id="@+id/btn_s" style="@style/NauKeyStyle" android:text="s"/>
+            <Button android:id="@+id/btn_d" style="@style/NauKeyStyle" android:text="d"/>
+            <Button android:id="@+id/btn_f" style="@style/NauKeyStyle" android:text="f"/>
+            <Button android:id="@+id/btn_g" style="@style/NauKeyStyle" android:text="g"/>
+            <Button android:id="@+id/btn_h" style="@style/NauKeyStyle" android:text="h"/>
+            <Button android:id="@+id/btn_j" style="@style/NauKeyStyle" android:text="j"/>
+            <Button android:id="@+id/btn_k" style="@style/NauKeyStyle" android:text="k"/>
+            <Button android:id="@+id/btn_l" style="@style/NauKeyStyle" android:text="l"/>
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5"/>
+        </LinearLayout>
+
+        <!-- 4. Baris Shift + ZXCVBNM + Backspace -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btn_shift" style="@style/NauSpecialKeyStyle" android:layout_weight="1.4" android:text="⇧"/>
+            <Button android:id="@+id/btn_z" style="@style/NauKeyStyle" android:text="z"/>
+            <Button android:id="@+id/btn_x" style="@style/NauKeyStyle" android:text="x"/>
+            <Button android:id="@+id/btn_c" style="@style/NauKeyStyle" android:text="c"/>
+            <Button android:id="@+id/btn_v" style="@style/NauKeyStyle" android:text="v"/>
+            <Button android:id="@+id/btn_b" style="@style/NauKeyStyle" android:text="b"/>
+            <Button android:id="@+id/btn_n" style="@style/NauKeyStyle" android:text="n"/>
+            <Button android:id="@+id/btn_m" style="@style/NauKeyStyle" android:text="m"/>
+            <Button android:id="@+id/btn_delete" style="@style/NauSpecialKeyStyle" android:layout_weight="1.4" android:text="⌫"/>
+        </LinearLayout>
+
+        <!-- 5. Baris 123 + Space + Enter -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btn_mode" style="@style/NauSpecialKeyStyle" android:layout_weight="1.5" android:text="123"/>
+            <Button android:id="@+id/btn_space" style="@style/NauKeyStyle" android:layout_weight="4" android:text=""/>
+            <Button android:id="@+id/btn_enter" style="@style/NauSpecialKeyStyle" android:layout_weight="1.5" android:text="↵"/>
+        </LinearLayout>
+
+        <!-- 6. Bottom Extra Bar dengan Vector Icon iOS -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
+            <ImageView
+                android:id="@+id/btn_emoji"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/ic_ios_globe"/>
+            <ImageView
+                android:id="@+id/btn_mic"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/ic_ios_mic"/>
+        </RelativeLayout>
     </LinearLayout>
 
-    <!-- 2. Baris 1 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="2dp"
-        android:orientation="horizontal">
-        <Button android:id="@+id/btn_q" style="@style/NauKeyStyle" android:text="q"/>
-        <Button android:id="@+id/btn_w" style="@style/NauKeyStyle" android:text="w"/>
-        <Button android:id="@+id/btn_e" style="@style/NauKeyStyle" android:text="e"/>
-        <Button android:id="@+id/btn_r" style="@style/NauKeyStyle" android:text="r"/>
-        <Button android:id="@+id/btn_t" style="@style/NauKeyStyle" android:text="t"/>
-        <Button android:id="@+id/btn_y" style="@style/NauKeyStyle" android:text="y"/>
-        <Button android:id="@+id/btn_u" style="@style/NauKeyStyle" android:text="u"/>
-        <Button android:id="@+id/btn_i" style="@style/NauKeyStyle" android:text="i"/>
-        <Button android:id="@+id/btn_o" style="@style/NauKeyStyle" android:text="o"/>
-        <Button android:id="@+id/btn_p" style="@style/NauKeyStyle" android:text="p"/>
-    </LinearLayout>
+    <!-- Container Panel Emoji (Hidden secara default) -->
+    <include
+        android:id="@+id/layout_emoji_panel"
+        layout="@layout/emoji_panel"
+        android:visibility="gone"/>
 
-    <!-- 3. Baris 2 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal">
-        <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5"/>
-        <Button android:id="@+id/btn_a" style="@style/NauKeyStyle" android:text="a"/>
-        <Button android:id="@+id/btn_s" style="@style/NauKeyStyle" android:text="s"/>
-        <Button android:id="@+id/btn_d" style="@style/NauKeyStyle" android:text="d"/>
-        <Button android:id="@+id/btn_f" style="@style/NauKeyStyle" android:text="f"/>
-        <Button android:id="@+id/btn_g" style="@style/NauKeyStyle" android:text="g"/>
-        <Button android:id="@+id/btn_h" style="@style/NauKeyStyle" android:text="h"/>
-        <Button android:id="@+id/btn_j" style="@style/NauKeyStyle" android:text="j"/>
-        <Button android:id="@+id/btn_k" style="@style/NauKeyStyle" android:text="k"/>
-        <Button android:id="@+id/btn_l" style="@style/NauKeyStyle" android:text="l"/>
-        <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5"/>
-    </LinearLayout>
-
-    <!-- 4. Baris 3 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal">
-        <Button android:id="@+id/btn_shift" style="@style/NauSpecialKeyStyle" android:layout_weight="1.4" android:text="⇧"/>
-        <Button android:id="@+id/btn_z" style="@style/NauKeyStyle" android:text="z"/>
-        <Button android:id="@+id/btn_x" style="@style/NauKeyStyle" android:text="x"/>
-        <Button android:id="@+id/btn_c" style="@style/NauKeyStyle" android:text="c"/>
-        <Button android:id="@+id/btn_v" style="@style/NauKeyStyle" android:text="v"/>
-        <Button android:id="@+id/btn_b" style="@style/NauKeyStyle" android:text="b"/>
-        <Button android:id="@+id/btn_n" style="@style/NauKeyStyle" android:text="n"/>
-        <Button android:id="@+id/btn_m" style="@style/NauKeyStyle" android:text="m"/>
-        <Button android:id="@+id/btn_delete" style="@style/NauSpecialKeyStyle" android:layout_weight="1.4" android:text="⌫"/>
-    </LinearLayout>
-
-    <!-- 5. Baris 4 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal">
-        <Button android:id="@+id/btn_mode" style="@style/NauSpecialKeyStyle" android:layout_weight="1.5" android:text="123"/>
-        <Button android:id="@+id/btn_space" style="@style/NauKeyStyle" android:layout_weight="4" android:text=""/>
-        <Button android:id="@+id/btn_enter" style="@style/NauSpecialKeyStyle" android:layout_weight="1.5" android:text="↵"/>
-    </LinearLayout>
-
-    <!-- 6. Bottom Extra Bar dengan Vector Icon iOS -->
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="34dp"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp">
-        <ImageView
-            android:id="@+id/btn_emoji"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:clickable="true"
-            android:focusable="true"
-            android:src="@drawable/ic_ios_globe"/>
-        <ImageView
-            android:id="@+id/btn_mic"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:clickable="true"
-            android:focusable="true"
-            android:src="@drawable/ic_ios_mic"/>
-    </RelativeLayout>
-</LinearLayout>
+</FrameLayout>

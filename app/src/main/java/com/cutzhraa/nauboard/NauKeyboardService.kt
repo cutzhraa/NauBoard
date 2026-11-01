@@ -5,21 +5,27 @@ import android.inputmethodservice.InputMethodService
 import android.os.Handler
 import android.os.Looper
 import android.speech.RecognizerIntent
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
-import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.GridLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 
 class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
     private var isCaps = false
     private var isSymbolMode = false
-    private var isSecondarySymbolMode = false // Flag untuk halaman simbol #+=
+    private var isSecondarySymbolMode = false
 
     private var rootView: View? = null
+    private var mainKeyboardLayout: LinearLayout? = null
+    private var emojiPanelLayout: View? = null
+
     private var shiftBtn: Button? = null
     private val letterButtons = mutableListOf<Button>()
     
@@ -34,6 +40,13 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         "mereka", "makan", "mau", "masih", "oleh", "pada", "saya", "sudah",
         "sampai", "tidak", "tapi", "tentang", "untuk", "yang"
     )
+
+    private val iosEmojis = listOf(
+        "😂", "❤️", "😍", "😭", "😊", "🔥", "👍",
+        "🥺", "🙏", "✨", "🥰", "💀", "😎", "🤣",
+        "🙈", "🎉", "🤔", "😴", "💩", "🥳", "💯",
+        "👋", "✌️", "🤍", "👀", "🙌", "💬", "📌"
+    )
     
     private val letters: Array<String> = arrayOf(
         "q","w","e","r","t","y","u","i","o","p",
@@ -41,14 +54,12 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         "z","x","c","v","b","n","m"
     )
     
-    // Simbol Utama (Halaman 1)
     private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
         "-","/",":",";","(",")","$","&","@",
         "\"", ".", ",", "?", "!", "'", " "
     )
 
-    // Simbol Sekunder #+= (Halaman 2)
     private val symbolsPage2: Array<String> = arrayOf(
         "[","]","{","}","#","%","^","*","+","=",
         "_","\\","|","~","<",">","€","£","¥","•",
@@ -68,7 +79,12 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
     override fun onCreateInputView(): View {
         rootView = layoutInflater.inflate(R.layout.main_keyboard, null)
-        rootView?.let { setupKeyListeners(it) }
+        rootView?.let {
+            mainKeyboardLayout = it.findViewById(R.id.layout_main_keyboard)
+            emojiPanelLayout = it.findViewById(R.id.layout_emoji_panel)
+            setupKeyListeners(it)
+            setupEmojiPanel(it)
+        }
         updateKeyLabels()
         updateSuggestions("")
         return rootView!!
@@ -106,20 +122,22 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         suggest2?.setOnClickListener { insertSuggestedWord(suggest2?.text.toString()) }
         suggest3?.setOnClickListener { insertSuggestedWord(suggest3?.text.toString()) }
 
+        // Buka Panel Emoji Native
         view.findViewById<ImageView>(R.id.btn_emoji)?.setOnClickListener {
-            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showInputMethodPicker()
+            mainKeyboardLayout?.visibility = View.GONE
+            emojiPanelLayout?.visibility = View.VISIBLE
         }
 
+        // Voice Input Action
         view.findViewById<ImageView>(R.id.btn_mic)?.setOnClickListener {
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
             try {
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
                 startActivity(intent)
             } catch (e: Exception) {
-                // Handle no voice recognizer
+                Toast.makeText(applicationContext, "Layanan pengetikan suara tidak tersedia", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -137,6 +155,28 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
                 }
             }
             true
+        }
+    }
+
+    private fun setupEmojiPanel(view: View) {
+        val gridLayout = view.findViewById<GridLayout>(R.id.grid_emojis)
+        view.findViewById<Button>(R.id.btn_close_emoji)?.setOnClickListener {
+            emojiPanelLayout?.visibility = View.GONE
+            mainKeyboardLayout?.visibility = View.VISIBLE
+        }
+
+        gridLayout?.removeAllViews()
+        for (emoji in iosEmojis) {
+            val tv = TextView(this).apply {
+                text = emoji
+                textSize = 24f // Menggunakan float 24f (bukan 24sp)
+                gravity = Gravity.CENTER
+                setPadding(8, 8, 8, 8)
+                setOnClickListener {
+                    currentInputConnection?.commitText(emoji, 1)
+                }
+            }
+            gridLayout?.addView(tv)
         }
     }
 
@@ -187,7 +227,6 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         when (v?.id) {
             R.id.btn_shift -> {
                 if (isSymbolMode) {
-                    // Tombol Shift berubah fungsi jadi Toggle #+= di mode simbol!
                     isSecondarySymbolMode = !isSecondarySymbolMode
                     updateKeyLabels()
                 } else {
@@ -197,7 +236,7 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
             }
             R.id.btn_mode -> {
                 isSymbolMode = !isSymbolMode
-                isSecondarySymbolMode = false // Reset ke hal 1
+                isSecondarySymbolMode = false
                 if (isSymbolMode) {
                     isCaps = false
                 }
