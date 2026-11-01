@@ -12,13 +12,23 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
     private val letterButtons = mutableListOf<Button>()
     
-    // Mapping Karakter Huruf vs Angka/Simbol
-    private val letters = arrayOf("q","w","e","r","t","y","u","i","o","p","a","s","d","f","g","h","j","k","l","z","x","c","v","b","n","m")
-    private val symbols = arrayOf("1","2","3","4","5","6","7","8","9","0","@","#","$","%","&","-","+","(",")","*",'"',"'",":",";","!","?")
+    // Explicitly typed as Array<String>
+    private val letters: Array<String> = arrayOf(
+        "q","w","e","r","t","y","u","i","o","p",
+        "a","s","d","f","g","h","j","k","l",
+        "z","x","c","v","b","n","m"
+    )
+    
+    private val symbols: Array<String> = arrayOf(
+        "1","2","3","4","5","6","7","8","9","0",
+        "@","#","$","%","&","-","+","(",")","*",
+        "\"", "'", ":", ";", "!", "?"
+    )
 
     override fun onCreateInputView(): View {
         val view = layoutInflater.inflate(R.layout.main_keyboard, null)
         setupKeyListeners(view)
+        updateKeyLabels()
         return view
     }
 
@@ -83,7 +93,7 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
                 if (!text.isNullOrEmpty()) {
                     inputConnection.commitText(text, 1)
                     
-                    // Auto-reset Shift setelah mengetik 1 huruf kapital (seperti iOS)
+                    // Auto-reset Shift setelah mengetik 1 huruf kapital
                     if (isCaps && !isSymbolMode) {
                         isCaps = false
                         updateKeyLabels()
