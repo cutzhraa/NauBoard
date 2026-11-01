@@ -1,9 +1,13 @@
 package com.cutzhraa.nauboard
 
+import android.content.Context
 import android.content.Intent
 import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.speech.RecognizerIntent
 import android.view.Gravity
 import android.view.KeyEvent
@@ -16,7 +20,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 
-class NauKeyboardService : InputMethodService(), View.OnClickListener {
+class NauKeyboardService : InputMethodService() {
 
     private var isCaps = false
     private var isSymbolMode = false
@@ -32,6 +36,8 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
     private var suggest1: TextView? = null
     private var suggest2: TextView? = null
     private var suggest3: TextView? = null
+
+    private var vibrator: Vibrator? = null
 
     private val dictionary = listOf(
         "ada", "adalah", "akan", "aku", "atau", "bisa", "baik", "bukan",
@@ -78,6 +84,8 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
     }
 
     override fun onCreateInputView(): View {
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+
         rootView = layoutInflater.inflate(R.layout.main_keyboard, null)
         rootView?.let {
             mainKeyboardLayout = it.findViewById(R.id.layout_main_keyboard)
@@ -90,6 +98,17 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         return rootView!!
     }
 
+    private fun triggerHaptic() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(12)
+            }
+        } catch (_: Exception) {}
+    }
+
     private fun setupKeyListeners(view: View) {
         letterButtons.clear()
         val letterIds = intArrayOf(
@@ -100,20 +119,81 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
             R.id.btn_x, R.id.btn_c, R.id.btn_v, R.id.btn_b, R.id.btn_n, R.id.btn_m
         )
 
+        // Instant Touch Listener untuk Tombol Huruf/Simbol
+        val keyTouchListener = View.OnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                triggerHaptic()
+                val button = v as? Button
+                val text = button?.text?.toString()
+                if (!text.isNullOrEmpty()) {
+                    currentInputConnection?.commitText(text, 1)
+                    if (isCaps && !isSymbolMode) {
+                        isCaps = false
+                        updateKeyLabels()
+                    }
+                    updateSuggestions(getCurrentWord())
+                }
+            }
+            false
+        }
+
         for (id in letterIds) {
             view.findViewById<Button>(id)?.let {
-                it.setOnClickListener(this)
+                it.setOnTouchListener(keyTouchListener)
                 letterButtons.add(it)
             }
         }
 
+        // Shift Key Listener
         shiftBtn = view.findViewById(R.id.btn_shift)
-        shiftBtn?.setOnClickListener(this)
+        shiftBtn?.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                triggerHaptic()
+                if (isSymbolMode) {
+                    isSecondarySymbolMode = !isSecondarySymbolMode
+                } else {
+                    isCaps = !isCaps
+                }
+                updateKeyLabels()
+            }
+            false
+        }
         
-        view.findViewById<Button>(R.id.btn_mode)?.setOnClickListener(this)
-        view.findViewById<Button>(R.id.btn_space)?.setOnClickListener(this)
-        view.findViewById<Button>(R.id.btn_enter)?.setOnClickListener(this)
+        // Mode Key Listener (123 / ABC)
+        view.findViewById<Button>(R.id.btn_mode)?.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                triggerHaptic()
+                isSymbolMode = !isSymbolMode
+                isSecondarySymbolMode = false
+                if (isSymbolMode) isCaps = false
+                (v as? Button)?.text = if (isSymbolMode) "ABC" else "123"
+                updateKeyLabels()
+            }
+            false
+        }
 
+        // Spacebar Touch Listener
+        view.findViewById<Button>(R.id.btn_space)?.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                triggerHaptic()
+                currentInputConnection?.commitText(" ", 1)
+                updateSuggestions("")
+            }
+            false
+        }
+
+        // Enter Key Touch Listener
+        view.findViewById<Button>(R.id.btn_enter)?.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                triggerHaptic()
+                currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+                currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+                updateSuggestions("")
+            }
+            false
+        }
+
+        // Suggestion Listeners
         suggest1 = view.findViewById(R.id.suggest_1)
         suggest2 = view.findViewById(R.id.suggest_2)
         suggest3 = view.findViewById(R.id.suggest_3)
@@ -122,14 +202,16 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         suggest2?.setOnClickListener { insertSuggestedWord(suggest2?.text.toString()) }
         suggest3?.setOnClickListener { insertSuggestedWord(suggest3?.text.toString()) }
 
-        // Buka Panel Emoji Native
+        // Globe / Emoji Picker Action
         view.findViewById<ImageView>(R.id.btn_emoji)?.setOnClickListener {
+            triggerHaptic()
             mainKeyboardLayout?.visibility = View.GONE
             emojiPanelLayout?.visibility = View.VISIBLE
         }
 
         // Voice Input Action
         view.findViewById<ImageView>(R.id.btn_mic)?.setOnClickListener {
+            triggerHaptic()
             try {
                 val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -141,10 +223,12 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
             }
         }
 
+        // Hold Backspace Auto-repeat Listener
         val deleteBtn = view.findViewById<Button>(R.id.btn_delete)
         deleteBtn?.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    triggerHaptic()
                     isDeleting = true
                     doDelete()
                     deleteHandler.postDelayed(deleteRunnable, 400)
@@ -161,6 +245,7 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
     private fun setupEmojiPanel(view: View) {
         val gridLayout = view.findViewById<GridLayout>(R.id.grid_emojis)
         view.findViewById<Button>(R.id.btn_close_emoji)?.setOnClickListener {
+            triggerHaptic()
             emojiPanelLayout?.visibility = View.GONE
             mainKeyboardLayout?.visibility = View.VISIBLE
         }
@@ -169,10 +254,11 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         for (emoji in iosEmojis) {
             val tv = TextView(this).apply {
                 text = emoji
-                textSize = 24f // Menggunakan float 24f (bukan 24sp)
+                textSize = 24f
                 gravity = Gravity.CENTER
                 setPadding(8, 8, 8, 8)
                 setOnClickListener {
+                    triggerHaptic()
                     currentInputConnection?.commitText(emoji, 1)
                 }
             }
@@ -219,54 +305,6 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         }
         inputConnection.commitText("$word ", 1)
         updateSuggestions("")
-    }
-
-    override fun onClick(v: View?) {
-        val inputConnection = currentInputConnection ?: return
-
-        when (v?.id) {
-            R.id.btn_shift -> {
-                if (isSymbolMode) {
-                    isSecondarySymbolMode = !isSecondarySymbolMode
-                    updateKeyLabels()
-                } else {
-                    isCaps = !isCaps
-                    updateKeyLabels()
-                }
-            }
-            R.id.btn_mode -> {
-                isSymbolMode = !isSymbolMode
-                isSecondarySymbolMode = false
-                if (isSymbolMode) {
-                    isCaps = false
-                }
-                val modeBtn = v as? Button
-                modeBtn?.text = if (isSymbolMode) "ABC" else "123"
-                updateKeyLabels()
-            }
-            R.id.btn_space -> {
-                inputConnection.commitText(" ", 1)
-                updateSuggestions("")
-            }
-            R.id.btn_enter -> {
-                inputConnection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
-                inputConnection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
-                updateSuggestions("")
-            }
-            else -> {
-                val button = v as? Button
-                val text = button?.text?.toString()
-                if (!text.isNullOrEmpty()) {
-                    inputConnection.commitText(text, 1)
-                    
-                    if (isCaps && !isSymbolMode) {
-                        isCaps = false
-                        updateKeyLabels()
-                    }
-                    updateSuggestions(getCurrentWord())
-                }
-            }
-        }
     }
 
     private fun updateKeyLabels() {
