@@ -23,6 +23,9 @@ import android.widget.Toast
 class NauKeyboardService : InputMethodService() {
 
     private var isCaps = false
+    private var isCapsLockLocked = false // Flag untuk double-tap lock
+    private var lastShiftClickTime = 0L
+
     private var isSymbolMode = false
     private var isSecondarySymbolMode = false
 
@@ -60,18 +63,18 @@ class NauKeyboardService : InputMethodService() {
         "z","x","c","v","b","n","m"
     )
     
-    // Simbol Utama (Halaman 1 - Pas 26 Tombol String)
+    // Simbol Halaman 1 (123)
     private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
         "-","/",":",";","(",")","$","&","@",
-        "\"", ".", ",", "?", "!", "'", "`", "~"
+        "\"", ".", ",", "?", "!", "'"
     )
 
-    // Simbol Sekunder #+= (Halaman 2 - Pas 26 Tombol String)
+    // Simbol Halaman 2 (#+= Persis Screenshot iOS)
     private val symbolsPage2: Array<String> = arrayOf(
         "[","]","{","}","#","%","^","*","+","=",
         "_","\\","|","~","<",">","€","£","¥","•",
-        ".",",","?", "!", "'", "°", "..."
+        ".",",","?","!", "'"
     )
 
     private val deleteHandler = Handler(Looper.getMainLooper())
@@ -121,7 +124,6 @@ class NauKeyboardService : InputMethodService() {
             R.id.btn_x, R.id.btn_c, R.id.btn_v, R.id.btn_b, R.id.btn_n, R.id.btn_m
         )
 
-        // Instant Touch Listener untuk Tombol Huruf/Simbol
         val keyTouchListener = View.OnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
@@ -129,7 +131,9 @@ class NauKeyboardService : InputMethodService() {
                 val text = button?.text?.toString()
                 if (!text.isNullOrEmpty()) {
                     currentInputConnection?.commitText(text, 1)
-                    if (isCaps && !isSymbolMode) {
+                    
+                    // Jika Caps Lock TIDAK dikunci, reset balik ke huruf kecil setelah ngetik 1 huruf
+                    if (isCaps && !isCapsLockLocked && !isSymbolMode) {
                         isCaps = false
                         updateKeyLabels()
                     }
@@ -146,7 +150,6 @@ class NauKeyboardService : InputMethodService() {
             }
         }
 
-        // Shift Key Listener
         shiftBtn = view.findViewById(R.id.btn_shift)
         shiftBtn?.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -154,27 +157,42 @@ class NauKeyboardService : InputMethodService() {
                 if (isSymbolMode) {
                     isSecondarySymbolMode = !isSecondarySymbolMode
                 } else {
-                    isCaps = !isCaps
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastShiftClickTime < 300) {
+                        // Double Tap terdeteksi -> LOCK CAPS LOCK
+                        isCapsLockLocked = true
+                        isCaps = true
+                    } else {
+                        // Single Tap -> Toggle Shift standar / Turn Off Lock
+                        if (isCapsLockLocked) {
+                            isCapsLockLocked = false
+                            isCaps = false
+                        } else {
+                            isCaps = !isCaps
+                        }
+                    }
+                    lastShiftClickTime = currentTime
                 }
                 updateKeyLabels()
             }
             false
         }
         
-        // Mode Key Listener (123 / ABC)
         view.findViewById<Button>(R.id.btn_mode)?.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
                 isSymbolMode = !isSymbolMode
                 isSecondarySymbolMode = false
-                if (isSymbolMode) isCaps = false
+                if (isSymbolMode) {
+                    isCaps = false
+                    isCapsLockLocked = false
+                }
                 (v as? Button)?.text = if (isSymbolMode) "ABC" else "123"
                 updateKeyLabels()
             }
             false
         }
 
-        // Spacebar Touch Listener
         view.findViewById<Button>(R.id.btn_space)?.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
@@ -184,7 +202,6 @@ class NauKeyboardService : InputMethodService() {
             false
         }
 
-        // Enter Key Touch Listener
         view.findViewById<Button>(R.id.btn_enter)?.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
@@ -195,7 +212,6 @@ class NauKeyboardService : InputMethodService() {
             false
         }
 
-        // Suggestion Listeners
         suggest1 = view.findViewById(R.id.suggest_1)
         suggest2 = view.findViewById(R.id.suggest_2)
         suggest3 = view.findViewById(R.id.suggest_3)
@@ -204,14 +220,12 @@ class NauKeyboardService : InputMethodService() {
         suggest2?.setOnClickListener { insertSuggestedWord(suggest2?.text.toString()) }
         suggest3?.setOnClickListener { insertSuggestedWord(suggest3?.text.toString()) }
 
-        // Globe / Emoji Picker Action
         view.findViewById<ImageView>(R.id.btn_emoji)?.setOnClickListener {
             triggerHaptic()
             mainKeyboardLayout?.visibility = View.GONE
             emojiPanelLayout?.visibility = View.VISIBLE
         }
 
-        // Voice Input Action
         view.findViewById<ImageView>(R.id.btn_mic)?.setOnClickListener {
             triggerHaptic()
             try {
@@ -225,7 +239,6 @@ class NauKeyboardService : InputMethodService() {
             }
         }
 
-        // Hold Backspace Auto-repeat Listener
         val deleteBtn = view.findViewById<Button>(R.id.btn_delete)
         deleteBtn?.setOnTouchListener { _, event ->
             when (event.action) {
@@ -313,17 +326,23 @@ class NauKeyboardService : InputMethodService() {
         if (isSymbolMode) {
             shiftBtn?.text = if (isSecondarySymbolMode) "123" else "#+="
         } else {
-            shiftBtn?.text = "⇧"
+            // Tampilkan ikon lock (⇪) saat Double-Tap Lock aktif
+            shiftBtn?.text = if (isCapsLockLocked) "⇪" else "⇧"
         }
 
         val currentSymbols = if (isSecondarySymbolMode) symbolsPage2 else symbolsPage1
 
         for (i in letterButtons.indices) {
             val btn = letterButtons[i]
-            btn.visibility = View.VISIBLE
             if (isSymbolMode) {
-                btn.text = currentSymbols[i]
+                if (i < currentSymbols.size) {
+                    btn.visibility = View.VISIBLE
+                    btn.text = currentSymbols[i]
+                } else {
+                    btn.visibility = View.GONE
+                }
             } else {
+                btn.visibility = View.VISIBLE
                 btn.text = if (isCaps) letters[i].uppercase() else letters[i]
             }
         }
