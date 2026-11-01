@@ -60,16 +60,18 @@ class NauKeyboardService : InputMethodService() {
         "z","x","c","v","b","n","m"
     )
     
+    // Simbol Utama (Halaman 1 - Pas 26 Tombol String)
     private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
         "-","/",":",";","(",")","$","&","@",
-        ".",",","?","!","'"
+        "\"", ".", ",", "?", "!", "'", "`", "~"
     )
 
+    // Simbol Sekunder #+= (Halaman 2 - Pas 26 Tombol String)
     private val symbolsPage2: Array<String> = arrayOf(
         "[","]","{","}","#","%","^","*","+","=",
         "_","\\","|","~","<",">","€","£","¥","•",
-        ".",",","?","!","'"
+        ".",",","?", "!", "'", "°", "..."
     )
 
     private val deleteHandler = Handler(Looper.getMainLooper())
@@ -318,12 +320,10 @@ class NauKeyboardService : InputMethodService() {
 
         for (i in letterButtons.indices) {
             val btn = letterButtons[i]
+            btn.visibility = View.VISIBLE
             if (isSymbolMode) {
-                // Jika indeks melebihi jumlah simbol, sembunyikan atau set kosong secara aman
-                btn.text = currentSymbols.getOrElse(i) { "" }
-                btn.visibility = if (i < currentSymbols.size) View.VISIBLE else View.INVISIBLE
+                btn.text = currentSymbols[i]
             } else {
-                btn.visibility = View.VISIBLE
                 btn.text = if (isCaps) letters[i].uppercase() else letters[i]
             }
         }
