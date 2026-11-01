@@ -7,7 +7,7 @@
     android:paddingTop="2dp"
     android:paddingBottom="4dp">
 
-    <!-- 1. Word Suggestion Bar (Hint Teks) -->
+    <!-- 1. Word Suggestion Bar -->
     <LinearLayout
         android:id="@+id/suggestion_bar"
         android:layout_width="match_parent"
@@ -23,7 +23,7 @@
             android:gravity="center"
             android:textColor="#1F2937"
             android:textSize="15sp"
-            android:text="aku"/>
+            android:text="yang"/>
         <View
             android:layout_width="1dp"
             android:layout_height="20dp"
@@ -37,7 +37,7 @@
             android:gravity="center"
             android:textColor="#1F2937"
             android:textSize="15sp"
-            android:text="saya"/>
+            android:text="aku"/>
         <View
             android:layout_width="1dp"
             android:layout_height="20dp"
@@ -51,10 +51,10 @@
             android:gravity="center"
             android:textColor="#1F2937"
             android:textSize="15sp"
-            android:text="itu"/>
+            android:text="ini"/>
     </LinearLayout>
 
-    <!-- 2. Baris QWERTY -->
+    <!-- 2. Baris 1 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="44dp"
@@ -72,7 +72,7 @@
         <Button android:id="@+id/btn_p" style="@style/NauKeyStyle" android:text="p"/>
     </LinearLayout>
 
-    <!-- 3. Baris ASDFGHJKL -->
+    <!-- 3. Baris 2 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="44dp"
@@ -91,7 +91,7 @@
         <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.5"/>
     </LinearLayout>
 
-    <!-- 4. Baris Shift + ZXCVBNM + Backspace -->
+    <!-- 4. Baris 3 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="44dp"
@@ -108,7 +108,7 @@
         <Button android:id="@+id/btn_delete" style="@style/NauSpecialKeyStyle" android:layout_weight="1.4" android:text="⌫"/>
     </LinearLayout>
 
-    <!-- 5. Baris 123 + Space (Polos) + Enter Icon (↵) -->
+    <!-- 5. Baris 4 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="44dp"
@@ -119,27 +119,29 @@
         <Button android:id="@+id/btn_enter" style="@style/NauSpecialKeyStyle" android:layout_weight="1.5" android:text="↵"/>
     </LinearLayout>
 
-    <!-- 6. Bottom Extra Bar (Emoji & Voice Icon) -->
+    <!-- 6. Bottom Extra Bar dengan Vector Icon iOS -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="32dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
-        <TextView
+        android:layout_height="34dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+        <ImageView
             android:id="@+id/btn_emoji"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:text="😄"
-            android:textSize="20sp"/>
-        <TextView
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_ios_globe"/>
+        <ImageView
             android:id="@+id/btn_mic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:text="🎙️"
-            android:textSize="18sp"/>
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_ios_mic"/>
     </RelativeLayout>
 </LinearLayout>

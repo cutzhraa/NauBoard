@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background Rounded Square Khas iOS (Grey Slate) -->
+    <path
+        android:fillColor="#D1D5DB"
+        android:pathData="M24,12 L84,12 A12,12 0 0,1 96,24 L96,84 A12,12 0 0,1 84,96 L24,96 A12,12 0 0,1 12,84 L12,24 A12,12 0 0,1 24,12 Z" />
+    
+    <!-- Tombol Keyboard 1 (Putih Rounded) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,32 L44,32 A4,4 0 0,1 48,36 L48,50 A4,4 0 0,1 44,54 L24,54 A4,4 0 0,1 20,50 L20,36 A4,4 0 0,1 24,32 Z" />
+        
+    <!-- Tombol Keyboard 2 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M64,32 L84,32 A4,4 0 0,1 88,36 L88,50 A4,4 0 0,1 84,54 L64,54 A4,4 0 0,1 60,50 L60,36 A4,4 0 0,1 64,32 Z" />
+
+    <!-- Tombol Spacebar Bawah -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,64 L80,64 A4,4 0 0,1 84,68 L84,76 A4,4 0 0,1 80,80 L28,80 A4,4 0 0,1 24,76 L24,68 A4,4 0 0,1 28,64 Z" />
+</vector>

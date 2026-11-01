@@ -1,22 +1,39 @@
 package com.cutzhraa.nauboard
 
+import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.os.Handler
 import android.os.Looper
+import android.speech.RecognizerIntent
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 
 class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
     private var isCaps = false
     private var isSymbolMode = false
+    private var isSecondarySymbolMode = false // Flag untuk halaman simbol #+=
 
     private var rootView: View? = null
     private var shiftBtn: Button? = null
     private val letterButtons = mutableListOf<Button>()
+    
+    private var suggest1: TextView? = null
+    private var suggest2: TextView? = null
+    private var suggest3: TextView? = null
+
+    private val dictionary = listOf(
+        "ada", "adalah", "akan", "aku", "atau", "bisa", "baik", "bukan",
+        "dengan", "dan", "dia", "dari", "harus", "ini", "itu", "jika",
+        "jadi", "juga", "karena", "kita", "kamu", "ke", "kalau", "lagi",
+        "mereka", "makan", "mau", "masih", "oleh", "pada", "saya", "sudah",
+        "sampai", "tidak", "tapi", "tentang", "untuk", "yang"
+    )
     
     private val letters: Array<String> = arrayOf(
         "q","w","e","r","t","y","u","i","o","p",
@@ -24,13 +41,20 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         "z","x","c","v","b","n","m"
     )
     
-    private val symbols: Array<String> = arrayOf(
+    // Simbol Utama (Halaman 1)
+    private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
-        "@","#","$","%","&","-","+","(",")","*",
-        "\"", "'", ":", ";", "!", "?"
+        "-","/",":",";","(",")","$","&","@",'"',
+        ".",",","?","!","'", " "
     )
 
-    // Handler untuk Hold Backspace (Delete Beruntun)
+    // Simbol Sekunder #+= (Halaman 2)
+    private val symbolsPage2: Array<String> = arrayOf(
+        "[","]","{","}","#","%","^","*","+","=",
+        "_","\\","|","~","<",">","€","£","¥","•",
+        ".",",","?","!","'", " "
+    )
+
     private val deleteHandler = Handler(Looper.getMainLooper())
     private var isDeleting = false
     private val deleteRunnable = object : Runnable {
@@ -46,6 +70,7 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         rootView = layoutInflater.inflate(R.layout.main_keyboard, null)
         rootView?.let { setupKeyListeners(it) }
         updateKeyLabels()
+        updateSuggestions("")
         return rootView!!
     }
 
@@ -73,12 +98,31 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         view.findViewById<Button>(R.id.btn_space)?.setOnClickListener(this)
         view.findViewById<Button>(R.id.btn_enter)?.setOnClickListener(this)
 
-        // Suggestion Click Listeners
-        view.findViewById<TextView>(R.id.suggest_1)?.setOnClickListener { insertSuggestedWord("aku ") }
-        view.findViewById<TextView>(R.id.suggest_2)?.setOnClickListener { insertSuggestedWord("saya ") }
-        view.findViewById<TextView>(R.id.suggest_3)?.setOnClickListener { insertSuggestedWord("itu ") }
+        suggest1 = view.findViewById(R.id.suggest_1)
+        suggest2 = view.findViewById(R.id.suggest_2)
+        suggest3 = view.findViewById(R.id.suggest_3)
 
-        // Setup Touch Listener untuk Hold Backspace
+        suggest1?.setOnClickListener { insertSuggestedWord(suggest1?.text.toString()) }
+        suggest2?.setOnClickListener { insertSuggestedWord(suggest2?.text.toString()) }
+        suggest3?.setOnClickListener { insertSuggestedWord(suggest3?.text.toString()) }
+
+        view.findViewById<ImageView>(R.id.btn_emoji)?.setOnClickListener {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showInputMethodPicker()
+        }
+
+        view.findViewById<ImageView>(R.id.btn_mic)?.setOnClickListener {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                // Handle no voice recognizer
+            }
+        }
+
         val deleteBtn = view.findViewById<Button>(R.id.btn_delete)
         deleteBtn?.setOnTouchListener { _, event ->
             when (event.action) {
@@ -96,6 +140,25 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         }
     }
 
+    private fun getCurrentWord(): String {
+        val inputConnection = currentInputConnection ?: return ""
+        val textBeforeCursor = inputConnection.getTextBeforeCursor(30, 0) ?: return ""
+        val words = textBeforeCursor.toString().split("\\s+".toRegex())
+        return words.lastOrNull() ?: ""
+    }
+
+    private fun updateSuggestions(query: String) {
+        val filtered = if (query.isEmpty()) {
+            listOf("yang", "aku", "ini")
+        } else {
+            dictionary.filter { it.startsWith(query, ignoreCase = true) }
+        }
+
+        suggest1?.text = filtered.getOrNull(0) ?: ""
+        suggest2?.text = filtered.getOrNull(1) ?: ""
+        suggest3?.text = filtered.getOrNull(2) ?: ""
+    }
+
     private fun doDelete() {
         val inputConnection = currentInputConnection ?: return
         val selectedText = inputConnection.getSelectedText(0)
@@ -104,10 +167,18 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         } else {
             inputConnection.commitText("", 1)
         }
+        updateSuggestions(getCurrentWord())
     }
 
     private fun insertSuggestedWord(word: String) {
-        currentInputConnection?.commitText(word, 1)
+        if (word.isEmpty()) return
+        val inputConnection = currentInputConnection ?: return
+        val current = getCurrentWord()
+        if (current.isNotEmpty()) {
+            inputConnection.deleteSurroundingText(current.length, 0)
+        }
+        inputConnection.commitText("$word ", 1)
+        updateSuggestions("")
     }
 
     override fun onClick(v: View?) {
@@ -115,13 +186,18 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
         when (v?.id) {
             R.id.btn_shift -> {
-                if (!isSymbolMode) {
+                if (isSymbolMode) {
+                    // Tombol Shift berubah fungsi jadi Toggle #+= di mode simbol!
+                    isSecondarySymbolMode = !isSecondarySymbolMode
+                    updateKeyLabels()
+                } else {
                     isCaps = !isCaps
                     updateKeyLabels()
                 }
             }
             R.id.btn_mode -> {
                 isSymbolMode = !isSymbolMode
+                isSecondarySymbolMode = false // Reset ke hal 1
                 if (isSymbolMode) {
                     isCaps = false
                 }
@@ -131,10 +207,12 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
             }
             R.id.btn_space -> {
                 inputConnection.commitText(" ", 1)
+                updateSuggestions("")
             }
             R.id.btn_enter -> {
                 inputConnection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
                 inputConnection.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+                updateSuggestions("")
             }
             else -> {
                 val button = v as? Button
@@ -146,6 +224,7 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
                         isCaps = false
                         updateKeyLabels()
                     }
+                    updateSuggestions(getCurrentWord())
                 }
             }
         }
@@ -153,7 +232,7 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
     private fun updateKeyLabels() {
         if (isSymbolMode) {
-            shiftBtn?.text = "#+="
+            shiftBtn?.text = if (isSecondarySymbolMode) "123" else "#+="
         } else {
             shiftBtn?.text = "⇧"
         }
@@ -161,7 +240,7 @@ class NauKeyboardService : InputMethodService(), View.OnClickListener {
         for (i in letterButtons.indices) {
             val btn = letterButtons[i]
             if (isSymbolMode) {
-                btn.text = symbols[i]
+                btn.text = if (isSecondarySymbolMode) symbolsPage2[i] else symbolsPage1[i]
             } else {
                 btn.text = if (isCaps) letters[i].uppercase() else letters[i]
             }
