@@ -7,7 +7,7 @@ import android.widget.Button
 
 class NauKeyboardService : InputMethodService(), View.OnClickListener {
 
-    private var isCaps = false
+    private var isCaps = true
     private var isSymbolMode = false
 
     private val letterButtons = mutableListOf<Button>()
