@@ -63,13 +63,13 @@ class NauKeyboardService : InputMethodService() {
     private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
         "-","/",":",";","(",")","$","&","@",
-        "\"", ".", ",", "?", "!", "'", " "
+        ".",",","?","!","'"
     )
 
     private val symbolsPage2: Array<String> = arrayOf(
         "[","]","{","}","#","%","^","*","+","=",
         "_","\\","|","~","<",">","€","£","¥","•",
-        ".",",","?","!","'", " "
+        ".",",","?","!","'"
     )
 
     private val deleteHandler = Handler(Looper.getMainLooper())
@@ -314,11 +314,16 @@ class NauKeyboardService : InputMethodService() {
             shiftBtn?.text = "⇧"
         }
 
+        val currentSymbols = if (isSecondarySymbolMode) symbolsPage2 else symbolsPage1
+
         for (i in letterButtons.indices) {
             val btn = letterButtons[i]
             if (isSymbolMode) {
-                btn.text = if (isSecondarySymbolMode) symbolsPage2[i] else symbolsPage1[i]
+                // Jika indeks melebihi jumlah simbol, sembunyikan atau set kosong secara aman
+                btn.text = currentSymbols.getOrElse(i) { "" }
+                btn.visibility = if (i < currentSymbols.size) View.VISIBLE else View.INVISIBLE
             } else {
+                btn.visibility = View.VISIBLE
                 btn.text = if (isCaps) letters[i].uppercase() else letters[i]
             }
         }
