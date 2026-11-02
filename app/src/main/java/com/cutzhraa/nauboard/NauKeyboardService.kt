@@ -43,8 +43,9 @@ class NauKeyboardService : InputMethodService() {
 
     private var vibrator: Vibrator? = null
 
-    // Handler terpisah untuk update saran kata secara async tanpa mengganggu thread sentuhan
+    // Handler untuk debouncing saran kata
     private val suggestionHandler = Handler(Looper.getMainLooper())
+    private var suggestionRunnable: Runnable? = null
 
     private val dictionary = listOf(
         "ada", "adalah", "akan", "aku", "atau", "bisa", "baik", "bukan",
@@ -101,13 +102,13 @@ class NauKeyboardService : InputMethodService() {
             setupEmojiPanel(it)
         }
         updateKeyLabels()
-        updateSuggestions("")
+        triggerSuggestionDebounce()
         return rootView!!
     }
 
     override fun onStartInputView(info: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
-        updateSuggestions("")
+        triggerSuggestionDebounce()
     }
 
     private fun triggerHaptic() {
@@ -130,6 +131,16 @@ class NauKeyboardService : InputMethodService() {
         return null
     }
 
+    // Fungsi Debounce untuk mencegah pencarian kata mengganggu kecepatan pengetikan
+    private fun triggerSuggestionDebounce() {
+        suggestionRunnable?.let { suggestionHandler.removeCallbacks(it) }
+        suggestionRunnable = Runnable {
+            updateSuggestions(getCurrentWord())
+        }
+        // Tunda 60ms agar UI Thread sepenuhnya fokus memasukkan karakter terlebih dahulu
+        suggestionHandler.postDelayed(suggestionRunnable!!, 60)
+    }
+
     private fun setupKeyListeners(view: View) {
         letterButtons.clear()
         val letterIds = intArrayOf(
@@ -140,17 +151,15 @@ class NauKeyboardService : InputMethodService() {
             R.id.btn_x, R.id.btn_c, R.id.btn_v, R.id.btn_b, R.id.btn_n, R.id.btn_m
         )
 
-        // Ultra-responsive Instant Touch Listener
         val keyTouchListener = View.OnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
                 val button = v as? Button
                 val text = button?.text?.toString()
                 if (!text.isNullOrEmpty()) {
-                    // 1. Langsung eksekusi ketik huruf/simbol tanpa tunda
+                    // 1. Eksekusi cepat penulisan karakter di thread utama
                     currentInputConnection?.commitText(text, 1)
                     
-                    // Auto-return ke QWERTY jika ketik koma/titik di mode simbol
                     if (isSymbolMode && (text == "," || text == ".")) {
                         isSymbolMode = false
                         isSecondarySymbolMode = false
@@ -161,10 +170,8 @@ class NauKeyboardService : InputMethodService() {
                         updateKeyLabels()
                     }
 
-                    // 2. Update saran kata di baris hint secara async agar tidak membebankan UI thread
-                    suggestionHandler.post {
-                        updateSuggestions(getCurrentWord())
-                    }
+                    // 2. Tunda kalkulasi saran kata secara teratur tanpa memblokir ketukan berikutnya
+                    triggerSuggestionDebounce()
                 }
                 return@OnTouchListener true
             }
@@ -225,7 +232,7 @@ class NauKeyboardService : InputMethodService() {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
                 currentInputConnection?.commitText(" ", 1)
-                suggestionHandler.post { updateSuggestions("") }
+                triggerSuggestionDebounce()
                 return@setOnTouchListener true
             }
             false
@@ -236,7 +243,7 @@ class NauKeyboardService : InputMethodService() {
                 triggerHaptic()
                 currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
                 currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
-                suggestionHandler.post { updateSuggestions("") }
+                triggerSuggestionDebounce()
                 return@setOnTouchListener true
             }
             false
@@ -357,9 +364,7 @@ class NauKeyboardService : InputMethodService() {
         } else {
             inputConnection.commitText("", 1)
         }
-        suggestionHandler.post {
-            updateSuggestions(getCurrentWord())
-        }
+        triggerSuggestionDebounce()
     }
 
     private fun insertSuggestedWord(view: TextView?) {
@@ -371,9 +376,7 @@ class NauKeyboardService : InputMethodService() {
             inputConnection.deleteSurroundingText(current.length, 0)
         }
         inputConnection.commitText("$fullText ", 1)
-        suggestionHandler.post {
-            updateSuggestions("")
-        }
+        triggerSuggestionDebounce()
     }
 
     private fun updateKeyLabels() {
