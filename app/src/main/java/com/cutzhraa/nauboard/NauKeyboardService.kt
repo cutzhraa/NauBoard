@@ -43,6 +43,9 @@ class NauKeyboardService : InputMethodService() {
 
     private var vibrator: Vibrator? = null
 
+    // Handler terpisah untuk update saran kata secara async tanpa mengganggu thread sentuhan
+    private val suggestionHandler = Handler(Looper.getMainLooper())
+
     private val dictionary = listOf(
         "ada", "adalah", "akan", "aku", "atau", "bisa", "baik", "bukan",
         "dengan", "dan", "dia", "dari", "harus", "ini", "itu", "jika",
@@ -144,9 +147,10 @@ class NauKeyboardService : InputMethodService() {
                 val button = v as? Button
                 val text = button?.text?.toString()
                 if (!text.isNullOrEmpty()) {
+                    // 1. Langsung eksekusi ketik huruf/simbol tanpa tunda
                     currentInputConnection?.commitText(text, 1)
                     
-                    // Auto-return ke QWERTY jika ngetik koma/titik di mode simbol
+                    // Auto-return ke QWERTY jika ketik koma/titik di mode simbol
                     if (isSymbolMode && (text == "," || text == ".")) {
                         isSymbolMode = false
                         isSecondarySymbolMode = false
@@ -156,9 +160,13 @@ class NauKeyboardService : InputMethodService() {
                         isCaps = false
                         updateKeyLabels()
                     }
-                    updateSuggestions(getCurrentWord())
+
+                    // 2. Update saran kata di baris hint secara async agar tidak membebankan UI thread
+                    suggestionHandler.post {
+                        updateSuggestions(getCurrentWord())
+                    }
                 }
-                return@OnTouchListener true // Return true agar event langsung dikonsumsi tanpa tunda!
+                return@OnTouchListener true
             }
             false
         }
@@ -217,7 +225,7 @@ class NauKeyboardService : InputMethodService() {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
                 currentInputConnection?.commitText(" ", 1)
-                updateSuggestions("")
+                suggestionHandler.post { updateSuggestions("") }
                 return@setOnTouchListener true
             }
             false
@@ -228,7 +236,7 @@ class NauKeyboardService : InputMethodService() {
                 triggerHaptic()
                 currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
                 currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
-                updateSuggestions("")
+                suggestionHandler.post { updateSuggestions("") }
                 return@setOnTouchListener true
             }
             false
@@ -317,7 +325,7 @@ class NauKeyboardService : InputMethodService() {
             if (!clipText.isNullOrEmpty()) {
                 val preview = if (clipText.length > 10) clipText.take(10) + "..." else clipText
                 suggest1?.text = preview
-                suggest1?.tag = clipText // Simpan teks penuh clipboard di tag
+                suggest1?.tag = clipText
                 suggest2?.text = "aku"
                 suggest2?.tag = null
                 suggest3?.text = "ini"
@@ -349,7 +357,9 @@ class NauKeyboardService : InputMethodService() {
         } else {
             inputConnection.commitText("", 1)
         }
-        updateSuggestions(getCurrentWord())
+        suggestionHandler.post {
+            updateSuggestions(getCurrentWord())
+        }
     }
 
     private fun insertSuggestedWord(view: TextView?) {
@@ -361,7 +371,9 @@ class NauKeyboardService : InputMethodService() {
             inputConnection.deleteSurroundingText(current.length, 0)
         }
         inputConnection.commitText("$fullText ", 1)
-        updateSuggestions("")
+        suggestionHandler.post {
+            updateSuggestions("")
+        }
     }
 
     private fun updateKeyLabels() {
