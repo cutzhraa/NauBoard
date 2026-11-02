@@ -1,5 +1,6 @@
 package com.cutzhraa.nauboard
 
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.inputmethodservice.InputMethodService
@@ -23,7 +24,7 @@ import android.widget.Toast
 class NauKeyboardService : InputMethodService() {
 
     private var isCaps = false
-    private var isCapsLockLocked = false // Flag untuk double-tap lock
+    private var isCapsLockLocked = false
     private var lastShiftClickTime = 0L
 
     private var isSymbolMode = false
@@ -63,14 +64,12 @@ class NauKeyboardService : InputMethodService() {
         "z","x","c","v","b","n","m"
     )
     
-    // Simbol Halaman 1 (123 - Lengkap dengan @ dan ")
     private val symbolsPage1: Array<String> = arrayOf(
         "1","2","3","4","5","6","7","8","9","0",
         "-","/",":",";","(",")","$","&","@",
         "\"", ".", ",", "?", "!", "'"
     )
 
-    // Simbol Halaman 2 (#+= Persis Screenshot iOS)
     private val symbolsPage2: Array<String> = arrayOf(
         "[","]","{","}","#","%","^","*","+","=",
         "_","\\","|","~","<",">","€","£","¥","•",
@@ -103,15 +102,29 @@ class NauKeyboardService : InputMethodService() {
         return rootView!!
     }
 
+    override fun onStartInputView(info: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        updateSuggestions("")
+    }
+
     private fun triggerHaptic() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrator?.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(12)
+                vibrator?.vibrate(10)
             }
         } catch (_: Exception) {}
+    }
+
+    private fun getClipboardText(): String? {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        if (clipboard != null && clipboard.hasPrimaryClip()) {
+            val item = clipboard.primaryClip?.getItemAt(0)
+            return item?.text?.toString()
+        }
+        return null
     }
 
     private fun setupKeyListeners(view: View) {
@@ -124,6 +137,7 @@ class NauKeyboardService : InputMethodService() {
             R.id.btn_x, R.id.btn_c, R.id.btn_v, R.id.btn_b, R.id.btn_n, R.id.btn_m
         )
 
+        // Ultra-responsive Instant Touch Listener
         val keyTouchListener = View.OnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 triggerHaptic()
@@ -132,13 +146,19 @@ class NauKeyboardService : InputMethodService() {
                 if (!text.isNullOrEmpty()) {
                     currentInputConnection?.commitText(text, 1)
                     
-                    // Jika Caps Lock TIDAK dikunci, reset balik ke huruf kecil setelah ngetik 1 huruf
-                    if (isCaps && !isCapsLockLocked && !isSymbolMode) {
+                    // Auto-return ke QWERTY jika ngetik koma/titik di mode simbol
+                    if (isSymbolMode && (text == "," || text == ".")) {
+                        isSymbolMode = false
+                        isSecondarySymbolMode = false
+                        rootView?.findViewById<Button>(R.id.btn_mode)?.text = "123"
+                        updateKeyLabels()
+                    } else if (isCaps && !isCapsLockLocked && !isSymbolMode) {
                         isCaps = false
                         updateKeyLabels()
                     }
                     updateSuggestions(getCurrentWord())
                 }
+                return@OnTouchListener true // Return true agar event langsung dikonsumsi tanpa tunda!
             }
             false
         }
@@ -159,11 +179,9 @@ class NauKeyboardService : InputMethodService() {
                 } else {
                     val currentTime = System.currentTimeMillis()
                     if (currentTime - lastShiftClickTime < 300) {
-                        // Double Tap terdeteksi -> LOCK CAPS LOCK
                         isCapsLockLocked = true
                         isCaps = true
                     } else {
-                        // Single Tap -> Toggle Shift standar / Turn Off Lock
                         if (isCapsLockLocked) {
                             isCapsLockLocked = false
                             isCaps = false
@@ -174,6 +192,7 @@ class NauKeyboardService : InputMethodService() {
                     lastShiftClickTime = currentTime
                 }
                 updateKeyLabels()
+                return@setOnTouchListener true
             }
             false
         }
@@ -189,6 +208,7 @@ class NauKeyboardService : InputMethodService() {
                 }
                 (v as? Button)?.text = if (isSymbolMode) "ABC" else "123"
                 updateKeyLabels()
+                return@setOnTouchListener true
             }
             false
         }
@@ -198,6 +218,7 @@ class NauKeyboardService : InputMethodService() {
                 triggerHaptic()
                 currentInputConnection?.commitText(" ", 1)
                 updateSuggestions("")
+                return@setOnTouchListener true
             }
             false
         }
@@ -208,6 +229,7 @@ class NauKeyboardService : InputMethodService() {
                 currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
                 currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
                 updateSuggestions("")
+                return@setOnTouchListener true
             }
             false
         }
@@ -216,9 +238,9 @@ class NauKeyboardService : InputMethodService() {
         suggest2 = view.findViewById(R.id.suggest_2)
         suggest3 = view.findViewById(R.id.suggest_3)
 
-        suggest1?.setOnClickListener { insertSuggestedWord(suggest1?.text.toString()) }
-        suggest2?.setOnClickListener { insertSuggestedWord(suggest2?.text.toString()) }
-        suggest3?.setOnClickListener { insertSuggestedWord(suggest3?.text.toString()) }
+        suggest1?.setOnClickListener { insertSuggestedWord(suggest1) }
+        suggest2?.setOnClickListener { insertSuggestedWord(suggest2) }
+        suggest3?.setOnClickListener { insertSuggestedWord(suggest3) }
 
         view.findViewById<ImageView>(R.id.btn_emoji)?.setOnClickListener {
             triggerHaptic()
@@ -289,15 +311,34 @@ class NauKeyboardService : InputMethodService() {
     }
 
     private fun updateSuggestions(query: String) {
-        val filtered = if (query.isEmpty()) {
-            listOf("yang", "aku", "ini")
-        } else {
-            dictionary.filter { it.startsWith(query, ignoreCase = true) }
-        }
+        val clipText = getClipboardText()
 
-        suggest1?.text = filtered.getOrNull(0) ?: ""
-        suggest2?.text = filtered.getOrNull(1) ?: ""
-        suggest3?.text = filtered.getOrNull(2) ?: ""
+        if (query.isEmpty()) {
+            if (!clipText.isNullOrEmpty()) {
+                val preview = if (clipText.length > 10) clipText.take(10) + "..." else clipText
+                suggest1?.text = preview
+                suggest1?.tag = clipText // Simpan teks penuh clipboard di tag
+                suggest2?.text = "aku"
+                suggest2?.tag = null
+                suggest3?.text = "ini"
+                suggest3?.tag = null
+            } else {
+                suggest1?.text = "yang"
+                suggest1?.tag = null
+                suggest2?.text = "aku"
+                suggest2?.tag = null
+                suggest3?.text = "ini"
+                suggest3?.tag = null
+            }
+        } else {
+            val filtered = dictionary.filter { it.startsWith(query, ignoreCase = true) }
+            suggest1?.text = filtered.getOrNull(0) ?: ""
+            suggest1?.tag = null
+            suggest2?.text = filtered.getOrNull(1) ?: ""
+            suggest2?.tag = null
+            suggest3?.text = filtered.getOrNull(2) ?: ""
+            suggest3?.tag = null
+        }
     }
 
     private fun doDelete() {
@@ -311,14 +352,15 @@ class NauKeyboardService : InputMethodService() {
         updateSuggestions(getCurrentWord())
     }
 
-    private fun insertSuggestedWord(word: String) {
-        if (word.isEmpty()) return
+    private fun insertSuggestedWord(view: TextView?) {
+        val fullText = view?.tag as? String ?: view?.text?.toString() ?: return
+        if (fullText.isEmpty()) return
         val inputConnection = currentInputConnection ?: return
         val current = getCurrentWord()
-        if (current.isNotEmpty()) {
+        if (current.isNotEmpty() && view?.tag == null) {
             inputConnection.deleteSurroundingText(current.length, 0)
         }
-        inputConnection.commitText("$word ", 1)
+        inputConnection.commitText("$fullText ", 1)
         updateSuggestions("")
     }
 
@@ -326,7 +368,6 @@ class NauKeyboardService : InputMethodService() {
         if (isSymbolMode) {
             shiftBtn?.text = if (isSecondarySymbolMode) "123" else "#+="
         } else {
-            // Tampilkan ikon lock (⇪) saat Double-Tap Lock aktif
             shiftBtn?.text = if (isCapsLockLocked) "⇪" else "⇧"
         }
 
